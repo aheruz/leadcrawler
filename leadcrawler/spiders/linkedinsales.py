@@ -19,8 +19,8 @@ class LinkedinSalesSpider(Spider):
         "PLAYWRIGHT_MAX_PAGES_PER_CONTEXT": 5,
     }
 
-    start_url = "https://www.linkedin.com/sales/search/people?_ntb=AuB8SON5Q3ulLQka2WArew%3D%3D&savedSearchId=50521354&lipi=urn%3Ali%3Apage%3Ad_sales2_saved_searches_lead%3BJDIH%2FQuDTA6NEZHC%2BbP8AA%3D%3D"
-    start_page = 80
+    start_url = "https://www.linkedin.com/sales/search/people?_ntb=AuB8SON5Q3ulLQka2WArew%3D%3D&savedSearchId=50524794&sessionId=R8AfFj3hRUCTNaaaVw4jEQ%3D%3D"
+    start_page = 1
 
     def start_requests(self):
         yield self.request(self.start_page)
