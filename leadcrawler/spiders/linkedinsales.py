@@ -16,11 +16,22 @@ class LinkedinSalesSpider(Spider):
             "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
             # "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
         },
-        "PLAYWRIGHT_MAX_PAGES_PER_CONTEXT": 5,
+        "PLAYWRIGHT_MAX_PAGES_PER_CONTEXT": 25,
     }
 
-    start_url = "https://www.linkedin.com/sales/search/people?_ntb=AuB8SON5Q3ulLQka2WArew%3D%3D&savedSearchId=50524794&sessionId=R8AfFj3hRUCTNaaaVw4jEQ%3D%3D"
-    start_page = 1
+    start_url = "https://www.linkedin.com/sales/search/people?lastViewedAt=1681218411357&savedSearchId=50524794"
+
+    start_page = 13
+
+    cookies = [
+        {
+            'name': 'li_at',
+            'value': 'AQEDARqhW18BCzqPAAABiEfjGvkAAAGIa--e-U0Akp81h6y0wuhDux7drUHi00433s5nFwEgpGjNim482tC5J6GajJe4JrgOgdNDT7YkVudXJaFFXQQ3s7_I6qP-WyITFMhTzohkJ9zonzI4am3eZItk',
+            'domain': '.www.linkedin.com',
+            'path': '/',
+        }
+    ]
+
 
     def start_requests(self):
         yield self.request(self.start_page)
@@ -37,6 +48,8 @@ class LinkedinSalesSpider(Spider):
             company = company if company else lead.xpath('div[1]/div/div[2]/div[2]/text()[normalize-space() != ""]').extract_first()
             about = lead.xpath('div[2]/dl/div/dd/div/span[2]/text()[normalize-space() != ""]').extract_first()
             company_linkedin_url = li.xpath('.//*[@data-control-name="view_company_via_profile_lockup"][contains(@href,"sales/company")]/@href').get()
+            company_linkedin_url = 'https://www.linkedin.com' + company_linkedin_url if company_linkedin_url else ''
+            linkedin_url = 'https://www.linkedin.com' + li.xpath('.//*[@data-control-name="view_lead_panel_via_search_lead_name"][contains(@href,"sales/lead")]/@href').get()
 
             yield {
                 'name' : lead.xpath('.//*[@data-anonymize="person-name"]/text()').extract_first(),
@@ -45,8 +58,8 @@ class LinkedinSalesSpider(Spider):
                 'company_name' : str(company).strip(),
                 'location' : lead.xpath('.//*[@data-anonymize="location"]/text()').extract_first(),
                 'about' : str(about).strip(),
-                'linkedin_url' : 'https://www.linkedin.com' + li.xpath('.//*[@data-control-name="view_lead_panel_via_search_lead_name"][contains(@href,"sales/lead")]/@href').get(),
-                'company_linkedin_url' : 'https://www.linkedin.com' + company_linkedin_url if company_linkedin_url else ''
+                'linkedin_url' : self.normalize_linkedin_url(linkedin_url),
+                'company_linkedin_url' : self.normalize_linkedin_url(company_linkedin_url),
             }
         if next_page:
             yield self.request(int(page) + 1)
@@ -60,14 +73,7 @@ class LinkedinSalesSpider(Spider):
                 'playwright_context': 'CTX_SNS_' + str(page),
                 "playwright_context_kwargs": {
                     "storage_state": {
-                        "cookies": [
-                            {
-                                'name': 'li_at',
-                                'value': 'AQEDARqhW18D9KYaAAABhufTJrcAAAGHeMgM104AGegezxPpAvP--59isAnuODzdJcsRQ8BtwZMqSHTxiUtTrcGbvgMCs0matY0csw7aRcP9GbTO4RnLp5K0B3d3i1iSd2Zm7SWJB3udBmeBHwt83Pgx',
-                                'domain': '.www.linkedin.com',
-                                'path': '/',
-                            }
-                        ]
+                        "cookies": self.cookies
                     }
                 },
                 "playwright_page_methods": [
@@ -97,3 +103,6 @@ class LinkedinSalesSpider(Spider):
                 ],
             },
         )
+
+    def normalize_linkedin_url(self, url):
+        return url.split("?")[0]
